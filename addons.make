@@ -1,0 +1,3 @@
+ofxCv
+ofxLibwebsockets
+ofxOpenCv
