@@ -2,7 +2,8 @@
 
 #include "ofMain.h"
 #include "ofxCv.h"
-#include "ofxLibwebsockets.h"
+#include "ofxNetwork.h"
+#include "ofxJSON.h"
 // #include "ofxIO.h"
 #include <sstream>
 
@@ -29,7 +30,7 @@ public:
 	void dragEvent(ofDragInfo dragInfo);
 	void gotMessage(ofMessage msg);
 
-	bool connectWebsocket();
+	bool connectTCP();
 	bool parseAndReadInJSONConfig(std::string json, bool isLocalConfig);
 
 	// ofxIO::DirectoryWatcherManager watcher;
@@ -42,7 +43,8 @@ public:
   // void onDirectoryWatcherItemMovedTo(const ofxIO::DirectoryWatcherManager::DirectoryEvent& evt){};
   // void onDirectoryWatcherError(const Poco::Exception& exc){};
 
-	ofxLibwebsockets::Client client;
+	ofxTCPClient client;
+	ofxJSONElement json;
 	Json::FastWriter jsonWriter;
   Json::Reader jsonReader;
 
@@ -72,11 +74,13 @@ public:
 	bool updateResolution = false;
 	bool doVisualize = false;
 
-	// websocket methods
-	void onConnect( ofxLibwebsockets::Event& args );
-	void onOpen( ofxLibwebsockets::Event& args );
-	void onClose( ofxLibwebsockets::Event& args );
-	void onIdle( ofxLibwebsockets::Event& args );
-	void onMessage( ofxLibwebsockets::Event& args );
-	void onBroadcast( ofxLibwebsockets::Event& args );
+	string msgRx;
+
+	// // websocket methods
+	// void onConnect( ofxLibwebsockets::Event& args );
+	// void onOpen( ofxLibwebsockets::Event& args );
+	// void onClose( ofxLibwebsockets::Event& args );
+	// void onIdle( ofxLibwebsockets::Event& args );
+	// void onMessage( ofxLibwebsockets::Event& args );
+	// void onBroadcast( ofxLibwebsockets::Event& args );
 };

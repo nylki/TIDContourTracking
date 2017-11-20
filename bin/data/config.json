@@ -1,2 +1,2 @@
-{"address":"localhost","maxAreaRadius":200.0,"minAreaRadius":15.0,"port":8080,"resolution":{"height":960,"width":1280},"threshold":150.0}
+{"address":"localhost","maxAreaRadius":200,"minAreaRadius":15,"port":8124,"resolution":{"height":960,"width":1280},"threshold":150}
 

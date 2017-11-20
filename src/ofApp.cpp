@@ -44,36 +44,15 @@ bool ofApp::saveConfiguration() {
 
 }
 
-bool ofApp::connectWebsocket() {
+bool ofApp::connectTCP() {
 
   try {
     // basic connection:
-    client.connect(address, port);
-    // OR optionally use SSL
-    //     client.connect("echo.websocket.org", true);
+    client.setup(address, port);
+    client.setMessageDelimiter("\n");
 
-    // 1 - get default options
-    //    ofxLibwebsockets::ClientOptions options = ofxLibwebsockets::defaultClientOptions();
-
-    // 2 - set basic params
-    //    options.host = "echo.websocket.org";
-
-    // advanced: set keep-alive timeouts for events like
-    // loss of internet
-
-    // 3 - set keep alive params
-    // BIG GOTCHA: on BSD systems, e.g. Mac OS X, these time params are system-wide
-    // ...so ka_time just says "check if alive when you want" instead of "check if
-    // alive after X seconds"
-    //    options.ka_time     = 1;
-    //    options.ka_probes   = 1;
-    //    options.ka_interval = 1;=
-
-    // 4 - connect
-    //    client.connect(options);
-    //
-  } catch (const std::exception& e) { // reference to the base of a polymorphic object
-    std::cout << e.what(); // information from length_error printed
+  } catch (const std::exception& e) {
+    std::cout << e.what();
   }
 
 
@@ -86,7 +65,7 @@ void ofApp::setup(){
   ofSetLogLevel(OF_LOG_NOTICE);
 
   lastConnectAttempt = ofGetElapsedTimeMillis();
-  client.addListener(this);
+  // client.addListener(this);
 
 
 
@@ -108,7 +87,7 @@ void ofApp::setup(){
     cout << "Loaded previous config from config.json\n" << "threshold: " << threshold << endl;
   }
 
-  connectWebsocket();
+  connectTCP();
 
   // watcher.registerAllEvents(this);
   //
@@ -167,7 +146,19 @@ void ofApp::update(){
     lastConnectAttempt = ellapsedMillis;
     resetConnection = false;
     cout << "attempt connection" << endl;
-    connectWebsocket();
+    connectTCP();
+    return;
+  }
+
+  if(client.isConnected()){
+    // we are connected - lets try to receive from the server
+    string str = client.receive();
+    if( str.length() > 0 ){
+      msgRx = str;
+      cout << "Got new message: " << msgRx << endl;
+      bool configChanged = parseAndReadInJSONConfig(msgRx, false);
+      if(configChanged) saveConfiguration();
+    }
   }
 
   if(updateResolution) {
@@ -188,8 +179,8 @@ void ofApp::update(){
     inverted.update();
     contourFinder.findContours(inverted);
 
-    // Dont send anything when no contours found.
-    if (contourFinder.size() > 0) {
+    // Dont send anything when no contours found or client offline
+    if (client.isConnected() && contourFinder.size() > 0) {
       Json::Value json;
       json["frameSequence"] = frameSequence;
       json["contours"] = Json::arrayValue;
@@ -226,6 +217,7 @@ void ofApp::update(){
       }
 
       client.send(jsonWriter.write(json));
+
     }
   }
 }
@@ -308,25 +300,6 @@ void ofApp::drawContours() {
   }
 }
 
-//--------------------------------------------------------------
-void ofApp::onConnect( ofxLibwebsockets::Event& args ){
-  cout<<"on connected"<<endl;
-}
-
-//--------------------------------------------------------------
-void ofApp::onOpen( ofxLibwebsockets::Event& args ){
-  cout<<"on open"<<endl;
-}
-
-//--------------------------------------------------------------
-void ofApp::onClose( ofxLibwebsockets::Event& args ){
-  cout<<"on close"<<endl;
-}
-
-//--------------------------------------------------------------
-void ofApp::onIdle( ofxLibwebsockets::Event& args ){
-  // cout<<"on idle"<<endl;
-}
 
 // void ofApp::onDirectoryWatcherItemModified(const ofxIO::DirectoryWatcherManager::DirectoryEvent& evt){
 //   cout << "Modified "  + evt.item.path() << ". Reload config." << endl;
@@ -430,18 +403,18 @@ bool ofApp::parseAndReadInJSONConfig( std::string json, bool isLocalConfig = fal
 }
 
 //--------------------------------------------------------------
-void ofApp::onMessage( ofxLibwebsockets::Event& args ){
-  cout << "Got new message: " << args.message << endl;
-  bool configChanged = parseAndReadInJSONConfig(args.message);
-  if(configChanged) saveConfiguration();
-}
-
-//--------------------------------------------------------------
-void ofApp::onBroadcast( ofxLibwebsockets::Event& args ){
-  cout<<"Got new broadcast message: " << args.message << endl;
-  bool configChanged = parseAndReadInJSONConfig(args.message);
-  if(configChanged) saveConfiguration();
-}
+// void ofApp::onMessage( ofxLibwebsockets::Event& args ){
+//   cout << "Got new message: " << args.message << endl;
+//   bool configChanged = parseAndReadInJSONConfig(args.message);
+//   if(configChanged) saveConfiguration();
+// }
+//
+// //--------------------------------------------------------------
+// void ofApp::onBroadcast( ofxLibwebsockets::Event& args ){
+//   cout<<"Got new broadcast message: " << args.message << endl;
+//   bool configChanged = parseAndReadInJSONConfig(args.message);
+//   if(configChanged) saveConfiguration();
+// }
 
 //--------------------------------------------------------------
 void ofApp::exit(){

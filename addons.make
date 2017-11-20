@@ -1,3 +1,4 @@
 ofxCv
-ofxLibwebsockets
 ofxOpenCv
+ofxNetwork
+ofxJSON
