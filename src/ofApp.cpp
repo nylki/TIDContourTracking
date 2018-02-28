@@ -33,6 +33,10 @@ bool ofApp::saveConfiguration() {
     configRoot["resolution"]["height"] = camHeight;
     configFile << jsonWriter.write(configRoot) << endl;
 
+    thresholdSlider = threshold;
+    minAreaRadiusSlider = minAreaRadius;
+    maxAreaRadiusSlider = maxAreaRadius;
+
     return true;
 
   } else {
@@ -65,20 +69,19 @@ void ofApp::setup(){
   ofSetLogLevel(OF_LOG_NOTICE);
 
   lastConnectAttempt = ofGetElapsedTimeMillis();
-  // client.addListener(this);
-
 
 
   // Define some default values. If there is a config.json in the data folder
   // the values from there will be used instead. See use of loadConfiguration()
   address = "localhost";
   port = 8080;
-  camWidth = 1280;  // try to grab at this size.
-  camHeight = 960;
+  camWidth = 640;  // try to grab at this size.
+  camHeight = 480;
   frameSequence = 0;
   threshold = 150;
   minAreaRadius = 15;
   maxAreaRadius = 200;
+
 
   if(loadConfiguration() == false) {
     cout << "No config file yet, save default values to config.json" << endl;
@@ -86,6 +89,13 @@ void ofApp::setup(){
   } else {
     cout << "Loaded previous config from config.json\n" << "threshold: " << threshold << endl;
   }
+
+  gui.setup();
+  gui.add(thresholdSlider.setup("threshold", threshold, 1, 255));
+  gui.add(minAreaRadiusSlider.setup("minAreaRadius", minAreaRadius, 1, 640));
+  gui.add(maxAreaRadiusSlider.setup("maxAreaRadius", maxAreaRadius, 1, 640));
+  gui.add(ringButton.setup("apply"));
+  ringButton.addListener(this, &ofApp::userInteracted);
 
   connectTCP();
 
@@ -129,6 +139,8 @@ void ofApp::setup(){
   contourFinder.getTracker().setMaximumDistance(32);
 
   showLabels = true;
+
+
 
   ofSetFrameRate(30);
 }
@@ -229,8 +241,9 @@ void ofApp::draw(){
     drawContours();
   }
 
-  ofDrawBitmapString("Theshold: " + ofToString(threshold), 10,10);
-  ofDrawBitmapString(client.isConnected() ? "Client is connected" : "Client disconnected :(", 10,50);
+  ofDrawBitmapString(client.isConnected() ? "Client is connected" : "Client disconnected :(", ofGetWidth() / 3.0, 50);
+  ofDrawBitmapString("press [v] to toggle visualization", ofGetWidth() / 3.0, 75);
+  gui.draw();
 }
 
 void ofApp::drawContours() {
@@ -333,6 +346,7 @@ bool ofApp::parseAndReadInJSONConfig( std::string json, bool isLocalConfig = fal
   Json::Value messageRoot;
   jsonReader.parse(json, messageRoot);
   bool configChanged = false;
+  cout << json << endl;
   cout << messageRoot << endl;
 
   if(isLocalConfig && messageRoot["address"].isString()) {
@@ -355,7 +369,9 @@ bool ofApp::parseAndReadInJSONConfig( std::string json, bool isLocalConfig = fal
     }
   }
 
+
   if(messageRoot["threshold"].isNumeric()) {
+
     int newThreshold = messageRoot["threshold"].asInt();
     if(newThreshold != threshold) {
       threshold = newThreshold;
@@ -417,6 +433,21 @@ bool ofApp::parseAndReadInJSONConfig( std::string json, bool isLocalConfig = fal
 // }
 
 //--------------------------------------------------------------
+
+void ofApp::userInteracted() {
+  threshold = thresholdSlider;
+  minAreaRadius = minAreaRadiusSlider;
+  maxAreaRadius = maxAreaRadiusSlider;
+
+  contourFinder.setThreshold(threshold);
+  contourFinder.setMinAreaRadius(minAreaRadiusSlider);
+  contourFinder.setMaxAreaRadius(maxAreaRadiusSlider);
+
+  saveConfiguration();
+}
+
+
+
 void ofApp::exit(){
   saveConfiguration();
 }

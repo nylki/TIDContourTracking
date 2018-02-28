@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxGui.h"
 #include "ofxCv.h"
 #include "ofxNetwork.h"
 #include "ofxJSON.h"
@@ -19,6 +20,9 @@ public:
 	bool loadConfiguration();
 	bool saveConfiguration();
 
+	// GUI
+
+
 	void keyPressed  (int key);
 	void keyReleased(int key);
 	void mouseMoved(int x, int y );
@@ -32,6 +36,9 @@ public:
 
 	bool connectTCP();
 	bool parseAndReadInJSONConfig(std::string json, bool isLocalConfig);
+
+
+	void userInteracted();
 
 	// ofxIO::DirectoryWatcherManager watcher;
 
@@ -52,8 +59,9 @@ public:
 	std::string address;
 	int port;
 
-
 	float threshold;
+
+
 	float minAreaRadius;
 	float maxAreaRadius;
 	ofImage inverted;
@@ -76,11 +84,11 @@ public:
 
 	string msgRx;
 
-	// // websocket methods
-	// void onConnect( ofxLibwebsockets::Event& args );
-	// void onOpen( ofxLibwebsockets::Event& args );
-	// void onClose( ofxLibwebsockets::Event& args );
-	// void onIdle( ofxLibwebsockets::Event& args );
-	// void onMessage( ofxLibwebsockets::Event& args );
-	// void onBroadcast( ofxLibwebsockets::Event& args );
+	ofxFloatSlider thresholdSlider;
+	ofxFloatSlider minAreaRadiusSlider;
+	ofxFloatSlider maxAreaRadiusSlider;
+
+	ofxButton ringButton;
+	ofxPanel gui;
+
 };
